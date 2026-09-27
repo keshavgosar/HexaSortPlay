@@ -1,0 +1,190 @@
+{
+  "ver": "2.3.14",
+  "importer": "fbx",
+  "imported": true,
+  "uuid": "0cebe65e-4981-4f67-947f-37f8495bbd74",
+  "files": [],
+  "subMetas": {
+    "141fe": {
+      "importer": "gltf-mesh",
+      "uuid": "0cebe65e-4981-4f67-947f-37f8495bbd74@141fe",
+      "displayName": "",
+      "id": "141fe",
+      "name": "circle.mesh",
+      "userData": {
+        "gltfIndex": 0,
+        "triangleCount": 1040
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "0b7b5": {
+      "importer": "gltf-material",
+      "uuid": "0cebe65e-4981-4f67-947f-37f8495bbd74@0b7b5",
+      "displayName": "",
+      "id": "0b7b5",
+      "name": "phong1.material",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "ec366": {
+      "importer": "gltf-scene",
+      "uuid": "0cebe65e-4981-4f67-947f-37f8495bbd74@ec366",
+      "displayName": "",
+      "id": "ec366",
+      "name": "Shelf_Circle.prefab",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "imageMetas": [],
+    "fbx": {
+      "smartMaterialEnabled": true
+    },
+    "lods": {
+      "enable": false,
+      "hasBuiltinLOD": false,
+      "options": [
+        {
+          "screenRatio": 0.25,
+          "faceCount": 1
+        },
+        {
+          "screenRatio": 0.125,
+          "faceCount": 0.25
+        },
+        {
+          "screenRatio": 0.01,
+          "faceCount": 0.1
+        }
+      ]
+    },
+    "assetFinder": {
+      "meshes": [
+        "0cebe65e-4981-4f67-947f-37f8495bbd74@141fe"
+      ],
+      "skeletons": [],
+      "textures": [],
+      "materials": [
+        "0cebe65e-4981-4f67-947f-37f8495bbd74@0b7b5"
+      ],
+      "scenes": [
+        "0cebe65e-4981-4f67-947f-37f8495bbd74@ec366"
+      ]
+    },
+    "materials": {
+      "0cebe65e-4981-4f67-947f-37f8495bbd74@0b7b5": {
+        "__type__": "cc.Material",
+        "_name": "",
+        "_objFlags": 0,
+        "__editorExtras__": {},
+        "_native": "",
+        "_effectAsset": {
+          "__uuid__": "c8f66d17-351a-48da-a12c-0212d28575c4",
+          "__expectedType__": "cc.EffectAsset"
+        },
+        "_techIdx": 0,
+        "_defines": [
+          {},
+          {},
+          {},
+          {},
+          {},
+          {}
+        ],
+        "_states": [
+          {
+            "rasterizerState": {},
+            "depthStencilState": {},
+            "blendState": {
+              "targets": [
+                {}
+              ]
+            }
+          },
+          {
+            "rasterizerState": {},
+            "depthStencilState": {},
+            "blendState": {
+              "targets": [
+                {}
+              ]
+            }
+          },
+          {
+            "rasterizerState": {},
+            "depthStencilState": {},
+            "blendState": {
+              "targets": [
+                {}
+              ]
+            }
+          },
+          {
+            "rasterizerState": {},
+            "depthStencilState": {},
+            "blendState": {
+              "targets": [
+                {}
+              ]
+            }
+          },
+          {
+            "rasterizerState": {},
+            "depthStencilState": {},
+            "blendState": {
+              "targets": [
+                {}
+              ]
+            }
+          },
+          {
+            "rasterizerState": {},
+            "depthStencilState": {},
+            "blendState": {
+              "targets": [
+                {}
+              ]
+            }
+          }
+        ],
+        "_props": [
+          {
+            "mainColor": {
+              "__type__": "cc.Color",
+              "r": 194,
+              "g": 190,
+              "b": 105,
+              "a": 255
+            }
+          },
+          {},
+          {},
+          {},
+          {},
+          {}
+        ]
+      }
+    }
+  }
+}

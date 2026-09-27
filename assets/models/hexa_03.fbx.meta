@@ -1,0 +1,96 @@
+{
+  "ver": "2.3.14",
+  "importer": "fbx",
+  "imported": true,
+  "uuid": "38f4bb54-b60f-4954-be57-46b3eaa2f8c1",
+  "files": [],
+  "subMetas": {
+    "44b97": {
+      "importer": "gltf-mesh",
+      "uuid": "38f4bb54-b60f-4954-be57-46b3eaa2f8c1@44b97",
+      "displayName": "",
+      "id": "44b97",
+      "name": "Mesh.005.mesh",
+      "userData": {
+        "gltfIndex": 0,
+        "triangleCount": 1292
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "d28ec": {
+      "importer": "gltf-material",
+      "uuid": "38f4bb54-b60f-4954-be57-46b3eaa2f8c1@d28ec",
+      "displayName": "",
+      "id": "d28ec",
+      "name": "standardSurface1.004.material",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "0c951": {
+      "importer": "gltf-scene",
+      "uuid": "38f4bb54-b60f-4954-be57-46b3eaa2f8c1@0c951",
+      "displayName": "",
+      "id": "0c951",
+      "name": "hexa_03.prefab",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "imageMetas": [],
+    "fbx": {
+      "smartMaterialEnabled": true
+    },
+    "lods": {
+      "enable": false,
+      "hasBuiltinLOD": false,
+      "options": [
+        {
+          "screenRatio": 0.25,
+          "faceCount": 1
+        },
+        {
+          "screenRatio": 0.125,
+          "faceCount": 0.25
+        },
+        {
+          "screenRatio": 0.01,
+          "faceCount": 0.1
+        }
+      ]
+    },
+    "assetFinder": {
+      "meshes": [
+        "38f4bb54-b60f-4954-be57-46b3eaa2f8c1@44b97"
+      ],
+      "skeletons": [],
+      "textures": [],
+      "materials": [
+        "38f4bb54-b60f-4954-be57-46b3eaa2f8c1@d28ec"
+      ],
+      "scenes": [
+        "38f4bb54-b60f-4954-be57-46b3eaa2f8c1@0c951"
+      ]
+    }
+  }
+}
