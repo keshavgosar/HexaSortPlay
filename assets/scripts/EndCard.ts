@@ -2,18 +2,8 @@
  * EndCard.ts
  * ---------------------------------------------------------
  * The mandatory "strong CTA" screen every ad-network reviewer
- * checks for. Shows the app icon, logo, and a big Play Now /
- * Install Now button that opens the store listing.
- *
- * Wire the storeUrl to the Play Store link from the brief:
- * https://play.google.com/store/apps/details?id=com.gamebrain.hexasort
- *
- * IMPORTANT for playable ad networks (Meta, Google, ironSource,
- * Mintegral, Vungle...): they each inject their OWN click handler
- * for "install now" - do NOT hardcode window.open on the final
- * build, use their SDK bridge instead (see README, step 7).
- * openStoreUrl() below is the fallback used when you preview the
- * .html file directly in a browser.
+ * checks for. Shows the app icon, logo, and a big Play Now
+ * button that opens the store listing.
  */
 import { _decorator, Component, Node, Button, tween, Vec3, UIOpacity } from 'cc';
 
@@ -47,10 +37,6 @@ export class EndCard extends Component {
     }
 
     private onCtaClicked() {
-        // Preferred: call the ad network's bridge if it exists, e.g.:
-        //   (window as any).mraid?.open(this.storeUrl);
-        //   (window as any).ExitApi?.exit();
-        // Fallback for local browser preview:
         const w = window as any;
         if (w.mraid && typeof w.mraid.open === 'function') {
             w.mraid.open(this.storeUrl);

@@ -10,7 +10,6 @@ export enum BlockColor {
     Orange = 1,
     Pink = 2,
     Green = 3,
-    // new colors seen in the reference video (existing values unchanged)
     Yellow = 4,
     Red = 5,
     Purple = 6,

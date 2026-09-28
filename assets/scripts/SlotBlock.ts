@@ -1,15 +1,6 @@
 /**
  * SlotBlock.ts
  * ---------------------------------------------------------
- * One STACK of hex discs sitting in a ring slot (or the pile at
- * the bottom of the front channel - it's the same thing).
- *
- * Your prefab only has ONE hex mesh; this script clones it upwards
- * to build a stack of `startHeight` discs, and can grow/shrink it
- * with setHeight() when stacks merge into the pile.
- *
- * Requirement: the MeshRenderer must be on a CHILD node of the
- * block (not on the same node as this script), since we clone it.
  */
 import { _decorator, Component, MeshRenderer, Color, Vec3, Node, Enum, instantiate } from 'cc';
 import { BlockColor, COLOR_TABLE, GameConfig } from './GameConfig';
