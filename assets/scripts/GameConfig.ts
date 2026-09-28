@@ -28,29 +28,35 @@ export const COLOR_TABLE: Record<BlockColor, Color> = {
 };
 
 export const GameConfig = {
-    // --- layout (kept from before, not used by the scripts directly) ---
-    ringCount: 6,
-    slotsPerRing: 6,
-    ringSpacing: 1.1,
-    ringRadius: 1.6,
+    // --- how many stacks sit around each ring ---
+    slotsPerRing: 14,
 
     // --- stacks ---
+    // Discs per stack. 0 = auto: as tall as fits between two shelves.
+    stackHeight: 0,
+    // Stacks may be scaled UP to this factor to fill the ring (they always scale
+    // DOWN as much as needed so neighbours never overlap).
+    hexMaxScale: 1.1,
+    // Gap between neighbouring stacks (1.04 = 4% air).
+    hexGap: 1.04,
     // Gap multiplier between discs in a stack (1 = touching).
     discSpacing: 1.0,
     // Block-local height of ONE disc. 0 = measure automatically from the mesh.
-    // Set this manually if stacks look squashed or have gaps.
     discStepOverride: 0,
 
     // --- pile at the bottom of the front channel ---
-    // Total discs in the pile that count as "full" -> sparkle + clear.
-    // Roughly: (number of rings) x (discs per stack). Tune by eye.
-    pileCapacity: 24,
+    // How many stacks fill a pile (pile clears when it reaches this many stacks tall).
+    pileStacks: 6,
+    // Manual override in discs. 0 = use pileStacks x stack height.
+    pileCapacity: 0,
+    // Starting pile size, in stacks (the big blue column in the video).
+    pileStartStacks: 2,
     // How many piles must be cleared before the end card shows.
     pilesToClear: 3,
 
     // --- feel ---
     // Degrees around the ring within which a stack counts as "at the front".
-    frontToleranceDeg: 10,
+    frontToleranceDeg: 8,
     // Seconds for a stack to drop down the channel.
     fallDuration: 0.35,
     // Seconds of no input before the hint wobble plays.

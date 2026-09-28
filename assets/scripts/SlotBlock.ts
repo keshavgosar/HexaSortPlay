@@ -13,6 +13,7 @@
  */
 import { _decorator, Component, MeshRenderer, Color, Vec3, Node, Enum, instantiate } from 'cc';
 import { BlockColor, COLOR_TABLE, GameConfig } from './GameConfig';
+import { meshWorldBounds } from './MeshUtil';
 
 const { ccclass, property } = _decorator;
 
@@ -69,6 +70,34 @@ export class SlotBlock extends Component {
         }
     }
 
+    /** Hex width (world), one disc's height (world) and the world Y of the stack's bottom. */
+    measureFootprint(): { width: number, discWorld: number, bottomWorldY: number } {
+        const r = this._template?.getComponent(MeshRenderer);
+        const b = r ? meshWorldBounds(r) : null;
+        const discWorld = this._step * this.node.worldScale.y;
+        if (!b) return { width: 0.3, discWorld, bottomWorldY: this.node.worldPosition.y };
+        return {
+            width: Math.max(b.max.x - b.min.x, b.max.z - b.min.z),
+            discWorld,
+            bottomWorldY: b.min.y,
+        };
+    }
+
+    /** Clone this stack (without its generated extra discs) under `parent`. */
+    spawnCopy(parent: Node): SlotBlock | null {
+        const n = instantiate(this.node);
+        for (const c of n.children.slice()) {
+            if (c.name === '__disc') { c.removeFromParent(); c.destroy(); }
+        }
+        const sb = n.getComponent(SlotBlock);
+        if (!sb) return null;
+        sb.isEmpty = false;
+        sb.isBusy = false;
+        n.active = true;
+        n.setParent(parent);
+        return sb;
+    }
+
     /** Thickness of one disc in this block's local Y units, measured from the mesh. */
     private measureStep(renderer: MeshRenderer): number {
         if (GameConfig.discStepOverride > 0) return GameConfig.discStepOverride;
@@ -108,6 +137,7 @@ export class SlotBlock extends Component {
         const p = this._template.position;
         while (this._discs.length < n) {
             const d = instantiate(this._template);
+            d.name = '__disc';
             d.setParent(this._template.parent!);
             d.setPosition(p.x, this._baseY + this._discs.length * this._step, p.z);
             this._discs.push(d);

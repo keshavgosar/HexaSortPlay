@@ -1,34 +1,11 @@
 /**
  * ShelfManager.ts
- * ---------------------------------------------------------
- * The game manager. Rules (same as the reference ad):
- *  - Every ring except the LAST one can be rotated by dragging.
- *  - The LAST ring is the bottom shelf. Its stack that faces the camera
- *    is the "pile" at the bottom of the front channel.
- *  - When a stack on a rotating ring reaches the front gap:
- *      * same color as the pile (or the pile is empty) -> it FALLS down
- *        the channel and merges into the pile
- *      * different color -> nothing happens, the ring just keeps rotating
- *  - When the pile reaches GameConfig.pileCapacity discs it sparkles,
- *    shrinks away, and a new pile starts with the next stack that falls.
- *  - After GameConfig.pilesToClear piles (or when nothing is left)
- *    the end card shows.
- *
- * Setup in the Editor:
- *  - Rings are found automatically (every RingController in the scene,
- *    sorted top -> bottom by height). ringRootNodes is optional.
- *  - The LOWEST ring is the pile ring. Its pile stack is `pileBlock`
- *    (or, if not assigned, its tallest stack).
- *  - towerCenter (optional): the central column / base node. If empty,
- *    the axis is estimated from the rings' block positions.
- *  - Each other ring should have one Is Empty block = the gap; it is
- *    rotated to the front at start so the channel is clear.
  */
 import { _decorator, Component, Node, Camera, Vec3, tween, Tween, director } from 'cc';
-import { RingController, wrap180 } from './RingController';
+import { RingController } from './RingController';
 import { SlotBlock } from './SlotBlock';
 import { EndCard } from './EndCard';
-import { GameConfig } from './GameConfig';
+import { BlockColor, GameConfig } from './GameConfig';
 
 const { ccclass, property } = _decorator;
 
@@ -38,27 +15,25 @@ export class ShelfManager extends Component {
     @property(Camera)
     mainCamera: Camera | null = null;
 
-    // Optional: rings are auto-detected. Assign only to force specific nodes.
     @property([Node])
     ringRootNodes: Node[] = [];
 
-    // Optional: the stack (on the lowest ring) that acts as the pile.
     @property(SlotBlock)
     pileBlock: SlotBlock | null = null;
 
-    // Optional: node on the tower axis (e.g. the central column). Else auto-estimated.
     @property(Node)
     towerCenter: Node | null = null;
 
     @property(EndCard)
     endCard: EndCard | null = null;
 
-    // Optional: a node (particles / sprite) enabled briefly when a pile clears.
     @property(Node)
     sparkleFx: Node | null = null;
 
-    private _rings: RingController[] = [];   // rotatable rings, TOP -> BOTTOM
+    private _rings: RingController[] = [];
     private _pileRing: RingController | null = null;
+    private _allRings: RingController[] = [];
+    private _capacity = 24;
     private _pile: SlotBlock | null = null;
     private _pileScale = new Vec3(1, 1, 1);
     private _frontAlpha = 0;
@@ -71,10 +46,8 @@ export class ShelfManager extends Component {
 
     get isOver(): boolean { return this._over; }
     get frontAlpha(): number { return this._frontAlpha; }
-    /** +1 / -1: which way a rightward drag should rotate the ring so it follows the finger. */
     get dragSign(): number { return this._dragSign; }
 
-    /** All rings the player may rotate (everything except the bottom/pile ring). */
     getRotatableRings(): RingController[] {
         return this._rings;
     }
@@ -87,24 +60,28 @@ export class ShelfManager extends Component {
             return;
         }
 
-        // 1) collect rings: assigned nodes + every RingController in the scene
         const found = new Set<RingController>();
         for (const n of this.ringRootNodes) {
             if (!n) continue;
             found.add(n.getComponent(RingController) ?? n.addComponent(RingController));
         }
         const scene = director.getScene();
-        if (scene) for (const r of scene.getComponentsInChildren(RingController)) found.add(r);
-        const all = Array.from(found)
+        if (scene) {
+            for (const r of scene.getComponentsInChildren(RingController)) {
+                found.add(r);
+            }
+        }
+        const list = Array.from(found);
+        for (const r of list) r.prepare();
+        const all = list
             .filter(r => r.slotCount > 0)
-            .sort((a, b) => b.avgWorldY() - a.avgWorldY()); // top -> bottom
-
+            .sort((a, b) => b.avgWorldY() - a.avgWorldY());
         if (all.length < 2) {
             console.error('ShelfManager: need at least 2 rings with SlotBlock children.');
             return;
         }
+        this._allRings = all;
 
-        // 2) shared tower axis
         const axis = new Vec3();
         if (this.towerCenter) {
             axis.set(this.towerCenter.worldPosition);
@@ -112,21 +89,17 @@ export class ShelfManager extends Component {
             const tmp = new Vec3();
             let n = 0;
             for (const r of all) {
-                if (r.slotCount < 3) continue;
-                r.getFittedCenterWorld(tmp);
-                axis.x += tmp.x; axis.z += tmp.z; n++;
+                if (r.getAxisWorld(tmp)) { axis.x += tmp.x; axis.z += tmp.z; n++; }
             }
             if (n > 0) { axis.x /= n; axis.z /= n; }
         }
-        for (const r of all) r.setAxisWorld(axis);
 
-        // 3) pile ring + pile stack
         let pileRing = all[all.length - 1];
         if (this.pileBlock) {
             const owner = all.find(r => r.indexOf(this.pileBlock!) >= 0);
             if (owner) pileRing = owner;
         }
-        let pile = this.pileBlock && pileRing.indexOf(this.pileBlock) >= 0 ? this.pileBlock : null;
+        let pile: SlotBlock | null = this.pileBlock && pileRing.indexOf(this.pileBlock) >= 0 ? this.pileBlock : null;
         if (!pile) {
             for (let i = 0; i < pileRing.slotCount; i++) {
                 const b = pileRing.getBlock(i);
@@ -138,16 +111,46 @@ export class ShelfManager extends Component {
         this._pile = pile;
         this._rings = all.filter(r => r !== pileRing);
 
-        // 4) front = direction from the axis to the camera
+        let headroom = Infinity;
+        for (let k = 1; k < all.length; k++) {
+            const above = all[k - 1].plate, cur = all[k].plate;
+            if (above && cur) headroom = Math.min(headroom, above.bottom - cur.top);
+        }
+        if (!isFinite(headroom) || headroom <= 0) headroom = 0;
+
+        let h = 4;
+        for (const r of all) {
+            const used = r.build({
+                axisWorld: axis,
+                slots: GameConfig.slotsPerRing,
+                headroomWorld: headroom,
+                fixedHeight: GameConfig.stackHeight,
+                skipHeight: r === pileRing ? pile : null,
+            });
+            if (used > 0) h = used;
+        }
+
+        for (const r of this._rings) {
+            if (r.firstEmptySlot() < 0) r.getBlock(0)?.setEmpty(true);
+        }
+
+        this.assignColors(pile, h);
+        if (pile) {
+            pile.setColor(pile.startColor);
+            if (!pile.isEmpty) {
+                pile.setHeight(Math.max(pile.startHeight, Math.round(h * GameConfig.pileStartStacks)));
+            }
+            this._pileScale = pile.node.scale.clone();
+        }
+        this._capacity = GameConfig.pileCapacity > 0 ? GameConfig.pileCapacity : GameConfig.pileStacks * h;
+
         this._frontAlpha = pileRing.computeFrontAlpha(this.mainCamera.node.worldPosition);
         if (pile) pileRing.alignSlotToFront(pileRing.indexOf(pile), this._frontAlpha);
         for (const r of this._rings) {
             const gap = r.firstEmptySlot();
             r.alignSlotToFront(gap >= 0 ? gap : r.nearestSlot(this._frontAlpha), this._frontAlpha);
         }
-        if (this._pile) this._pileScale = this._pile.node.scale.clone();
 
-        // 5) drag direction so the ring follows the finger
         const a = this._frontAlpha * Math.PI / 180;
         const tx = -Math.sin(a), tz = -Math.cos(a);
         const right = this.mainCamera.node.right;
@@ -155,8 +158,39 @@ export class ShelfManager extends Component {
 
         if (this.sparkleFx) this.sparkleFx.active = false;
         console.log(`[ShelfManager] rings top->bottom: ${all.map(r => `${r.node.name}(${r.slotCount})`).join(', ')}` +
-            ` | pile ring: ${pileRing.node.name} | rotatable: ${this._rings.length}`);
+            ` | pile ring: ${pileRing.node.name} | stack height: ${h} | pile capacity: ${this._capacity} discs | headroom: ${headroom.toFixed(3)}`);
         this._ready = true;
+    }
+
+    private assignColors(pile: SlotBlock | null, _h: number) {
+        const palette = [
+            BlockColor.Blue, BlockColor.Orange, BlockColor.Pink, BlockColor.Green,
+            BlockColor.Yellow, BlockColor.Red, BlockColor.Purple,
+        ];
+        const play: SlotBlock[] = [];
+        for (const r of this._rings) {
+            for (let i = 0; i < r.slotCount; i++) {
+                const b = r.getBlock(i);
+                if (b && !b.isEmpty) play.push(b);
+            }
+        }
+        const per = Math.max(1, GameConfig.pileStacks);
+        const bag: BlockColor[] = [];
+        const full = Math.floor(play.length / per);
+        for (let i = 0; i < full; i++) for (let k = 0; k < per; k++) bag.push(palette[i % palette.length]);
+        while (bag.length < play.length) bag.push(palette[Math.floor(Math.random() * palette.length)]);
+        for (let i = bag.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [bag[i], bag[j]] = [bag[j], bag[i]];
+        }
+        play.forEach((b, i) => b.setColor(bag[i]));
+
+        if (this._pileRing) {
+            for (let i = 0; i < this._pileRing.slotCount; i++) {
+                const b = this._pileRing.getBlock(i);
+                if (b && b !== pile && !b.isEmpty) b.setColor(palette[Math.floor(Math.random() * palette.length)]);
+            }
+        }
     }
 
     update(dt: number) {
@@ -170,23 +204,18 @@ export class ShelfManager extends Component {
         this.checkDrops();
     }
 
-    // ---------------------------------------------------------------- dropping
-
     private checkDrops() {
         const pile = this._pile;
         if (this._falling || !pile) return;
 
         const rotatable = this._rings.length;
-        // Lower rings first so the stack closest to the pile goes first.
         for (let k = rotatable - 1; k >= 0; k--) {
             const slot = this._rings[k].frontSlot(this._frontAlpha, GameConfig.frontToleranceDeg);
             if (slot < 0) continue;
             const block = this._rings[k].getBlock(slot)!;
 
-            // Wrong color -> it just keeps rotating.
             if (!pile.isEmpty && pile.color !== block.color) continue;
 
-            // Something sitting in the channel below blocks the drop.
             let blocked = false;
             for (let j = k + 1; j < rotatable; j++) {
                 if (this._rings[j].frontSlot(this._frontAlpha, GameConfig.frontToleranceDeg) >= 0) {
@@ -229,7 +258,7 @@ export class ShelfManager extends Component {
         block.setEmpty(true);
         block.isBusy = false;
 
-        if (pile.height >= GameConfig.pileCapacity) {
+        if (pile.height >= this._capacity) {
             this.clearPile();
         } else {
             this.bumpPile();
@@ -252,7 +281,7 @@ export class ShelfManager extends Component {
     private clearPile() {
         const pile = this._pile!;
         const s = this._pileScale;
-        this._falling = true; // freeze drops during the clear
+        this._falling = true;
 
         Tween.stopAllByTarget(pile.node);
         pile.node.setScale(s);
@@ -285,9 +314,6 @@ export class ShelfManager extends Component {
         this.endCard?.show();
     }
 
-    // ---------------------------------------------------------------- hint
-
-    /** Wiggle a ring that has a stack which would drop if rotated to the front. */
     private showHint() {
         const pile = this._pile;
         if (!pile) return;
